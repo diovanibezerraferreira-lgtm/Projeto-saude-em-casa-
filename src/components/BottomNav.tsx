@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWorkout } from '../context/WorkoutContext';
-import { Home, Dumbbell, Eye, TrendingUp, User } from 'lucide-react';
+import { Home, Dumbbell, Utensils, TrendingUp, User } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
   const { selectedTab, setSelectedTab } = useWorkout();
@@ -8,8 +8,8 @@ export const BottomNav: React.FC = () => {
   const tabs = [
     { id: 'home', label: 'Início', icon: Home },
     { id: 'workouts', label: 'Treinos', icon: Dumbbell },
-    { id: 'gifs', label: 'GIFs', icon: Eye },
-    { id: 'progress', label: 'Progresso', icon: TrendingUp },
+    { id: 'diet', label: 'Dieta', icon: Utensils },
+    { id: 'progress', label: 'Evolução', icon: TrendingUp },
     { id: 'profile', label: 'Perfil', icon: User },
   ] as const;
 

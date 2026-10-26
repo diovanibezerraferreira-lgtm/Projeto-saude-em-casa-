@@ -51,7 +51,20 @@ export const Header: React.FC = () => {
               selectedTab === 'workouts' ? 'text-emerald-400 font-semibold border-b-2 border-emerald-400' : ''
             }`}
           >
-            Treinos 30 Dias
+            Treinos 30 Semanas
+          </button>
+          <button
+            onClick={() => setSelectedTab('diet')}
+            className={`whitespace-nowrap shrink-0 hover:text-white transition-colors py-1 flex items-center gap-1.5 ${
+              selectedTab === 'diet' ? 'text-amber-400 font-semibold border-b-2 border-amber-400' : ''
+            }`}
+          >
+            <span>Dieta & Nutrição</span>
+            {userProfile.subscriptionTier === 'vip_diet' ? (
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold">VIP</span>
+            ) : (
+              <span className="text-[9px] bg-zinc-800 text-amber-400 px-1.5 py-0.2 rounded border border-amber-500/30">Novo</span>
+            )}
           </button>
           <button
             onClick={() => setSelectedTab('gifs')}
@@ -100,15 +113,27 @@ export const Header: React.FC = () => {
             {soundMuted ? <VolumeX className="w-4 h-4 text-zinc-500" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
           </button>
 
-          {/* Premium Status or Upgrade Button */}
-          {userProfile.isPremium ? (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-              <Crown className="w-3.5 h-3.5" />
-              <span>Premium Ativo</span>
-            </div>
+          {/* Plan Status or Upgrade Button */}
+          {userProfile.subscriptionTier === 'vip_diet' ? (
+            <button
+              onClick={() => setSelectedTab('plans')}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-500/25 transition-colors"
+              title="Clique para ver detalhes do plano"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>VIP + Dieta</span>
+            </button>
+          ) : userProfile.subscriptionTier === 'pro' ? (
+            <button
+              onClick={() => setSelectedTab('plans')}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 transition-colors"
+              title="Clique para ver planos ou fazer upgrade para Dieta"
+            >
+              <span>Pro (Treinos)</span>
+            </button>
           ) : (
             <button
-              onClick={openSubscriptionModal}
+              onClick={() => openSubscriptionModal()}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-amber-500/40 text-amber-300 text-xs font-semibold transition-colors"
             >
               <Crown className="w-3.5 h-3.5 text-amber-400" />

@@ -119,13 +119,39 @@ export const ProfileScreen: React.FC = () => {
               {userProfile.name.charAt(0).toUpperCase()}
             </div>
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-bold text-white">{userProfile.name}</h2>
             <div className="text-xs text-emerald-400 font-medium mt-0.5">
               {goalLabels[userProfile.goal]}
             </div>
             <div className="text-xs text-zinc-400 mt-0.5">
               Nível: {userProfile.experienceLevel === 'iniciante' ? 'Iniciante (Treinos em Casa)' : 'Intermediário'}
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider mb-1">Seu Plano:</div>
+            {userProfile.subscriptionTier === 'vip_diet' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>VIP + Dieta</span>
+              </span>
+            ) : userProfile.subscriptionTier === 'pro' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm">
+                <span>Pro (Treinos)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700">
+                <span>Gratuito</span>
+              </span>
+            )}
+            <div className="mt-1">
+              <button
+                onClick={() => openSubscriptionModal()}
+                className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-2"
+              >
+                Gerenciar Plano
+              </button>
             </div>
           </div>
         </div>

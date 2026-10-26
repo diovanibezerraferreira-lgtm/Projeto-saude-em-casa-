@@ -13,6 +13,7 @@ import { ExerciseGifsScreen } from './components/ExerciseGifsScreen';
 import { ProgressScreen } from './components/ProgressScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { PlansScreen } from './components/PlansScreen';
+import { DietScreen } from './components/DietScreen';
 import { WorkoutPlayer } from './components/WorkoutPlayer';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { Smartphone, Monitor } from 'lucide-react';
@@ -64,6 +65,7 @@ const MainAppContent: React.FC = () => {
 
           {selectedTab === 'home' && <HomeScreen />}
           {selectedTab === 'workouts' && <WorkoutsScreen />}
+          {selectedTab === 'diet' && <DietScreen />}
           {selectedTab === 'gifs' && <ExerciseGifsScreen />}
           {selectedTab === 'progress' && <ProgressScreen />}
           {selectedTab === 'profile' && <ProfileScreen />}

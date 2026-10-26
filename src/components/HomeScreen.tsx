@@ -11,7 +11,10 @@ import {
   Sparkles,
   Award,
   CalendarCheck,
-  Eye
+  Eye,
+  Utensils,
+  Droplets,
+  Crown
 } from 'lucide-react';
 import { WorkoutMusicGenerator } from './WorkoutMusicGenerator';
 
@@ -24,7 +27,8 @@ export const HomeScreen: React.FC = () => {
     startWorkout, 
     setSelectedTab,
     toggleDayManualCompletion,
-    openSubscriptionModal
+    openSubscriptionModal,
+    waterIntakeMl
   } = useWorkout();
 
   const [imgError, setImgError] = useState(false);
@@ -41,7 +45,12 @@ export const HomeScreen: React.FC = () => {
     return 'Boa noite';
   };
 
-  const progressPercentage = Math.round((completedDays.length / 30) * 100);
+  const progressPercentage = Math.round((completedDays.length / (program.length || 210)) * 100);
+
+  // Current week slice of days
+  const currentWeekNum = todaysWorkout.week || 1;
+  const weekStartIdx = Math.max(0, (currentWeekNum - 1) * 7);
+  const currentWeekDays = program.slice(weekStartIdx, weekStartIdx + 7);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -174,13 +183,13 @@ export const HomeScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* 30-Day Program Progression Card */}
+      {/* 30-Week Program Progression Card */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">Progresso do Desafio 30 Dias</h3>
+            <h3 className="text-base font-bold text-white">Progresso do Desafio 30 Semanas</h3>
             <p className="text-xs text-zinc-400">
-              {completedDays.length} de 30 dias completados ({30 - completedDays.length} dias restantes)
+              {completedDays.length} de {program.length} dias completados ({Math.max(0, program.length - completedDays.length)} dias restantes · Semana {currentWeekNum} de 30)
             </p>
           </div>
           <button
@@ -197,21 +206,24 @@ export const HomeScreen: React.FC = () => {
           <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden p-0.5 border border-zinc-700">
             <div
               className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.max(5, progressPercentage)}%` }}
+              style={{ width: `${Math.max(3, progressPercentage)}%` }}
             />
           </div>
           <div className="flex justify-between text-[11px] text-zinc-400 font-medium">
             <span>Início (Dia 1)</span>
             <span className="text-emerald-400 font-bold tabular-nums">{progressPercentage}% Concluído</span>
-            <span>Meta (Dia 30)</span>
+            <span>Meta (Dia {program.length})</span>
           </div>
         </div>
 
-        {/* Visual 7-day snippet dots */}
+        {/* Visual Current Week 7-day snippet dots */}
         <div className="pt-2">
-          <div className="text-xs font-medium text-zinc-300 mb-2">Próximos dias do programa:</div>
+          <div className="text-xs font-medium text-zinc-300 mb-2 flex items-center justify-between">
+            <span>Dias da Semana Atual (Semana {currentWeekNum}):</span>
+            <span className="text-[11px] text-emerald-400">Treinos de {currentWeekDays[0]?.exercises.length || 15} a {currentWeekDays[currentWeekDays.length - 1]?.exercises.length || 30} exercícios</span>
+          </div>
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-            {program.slice(0, 7).map((d) => {
+            {currentWeekDays.map((d) => {
               const isDone = completedDays.includes(d.day);
               const isCurrent = d.day === currentDay;
               return (
@@ -233,7 +245,7 @@ export const HomeScreen: React.FC = () => {
                     <span className="text-[10px] text-teal-400 font-bold mt-1">Desc.</span>
                   ) : (
                     <span className="text-xs font-bold text-white mt-0.5 tabular-nums">
-                      {d.estimatedMinutes}m
+                      {d.exercises.length} ex
                     </span>
                   )}
                 </button>
@@ -296,6 +308,46 @@ export const HomeScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Nutrition & Diet Quick Access Card */}
+      <div className="bg-gradient-to-r from-zinc-900 via-amber-950/20 to-zinc-900 border border-amber-500/30 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+            <Utensils className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wide">
+                Alimentação & Hidratação
+              </span>
+              {userProfile.subscriptionTier === 'vip_diet' ? (
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full">
+                  Plano VIP Ativo
+                </span>
+              ) : (
+                <span className="text-[10px] bg-zinc-800 text-amber-300 border border-amber-500/30 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-amber-400" />
+                  <span>Plano VIP</span>
+                </span>
+              )}
+            </div>
+            <h4 className="text-base sm:text-lg font-bold text-white mt-0.5">
+              Cardápio de Dieta & Metas de Água
+            </h4>
+            <p className="text-xs text-zinc-300 mt-1 max-w-xl">
+              Água hoje: <strong className="text-cyan-400">{waterIntakeMl} ml</strong> registrados. Acompanhe pré-treino, pós-treino e receitas fit rápidas.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setSelectedTab('diet')}
+          className="min-h-[44px] px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition-all whitespace-nowrap self-stretch sm:self-auto justify-center"
+        >
+          <Utensils className="w-4 h-4" />
+          <span>Ver Cardápio & Dieta</span>
+        </button>
+      </div>
+
       {/* Beginner Guidance & Safety Callout */}
       <div className="bg-gradient-to-r from-zinc-900 to-zinc-900/80 border border-emerald-500/20 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
@@ -329,23 +381,30 @@ export const HomeScreen: React.FC = () => {
       {/* Lyria AI Workout Music Generator */}
       <WorkoutMusicGenerator />
 
-      {/* Premium Trial Banner (Unobtrusive) */}
-      {!userProfile.isPremium && (
+      {/* Two Paid Plans Banner */}
+      {userProfile.subscriptionTier !== 'vip_diet' && (
         <div 
-          onClick={openSubscriptionModal}
-          className="bg-gradient-to-r from-amber-950/30 to-zinc-900 border border-amber-500/30 rounded-3xl p-5 cursor-pointer hover:border-amber-500/50 transition-all flex items-center justify-between gap-4"
+          onClick={() => openSubscriptionModal()}
+          className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/20 border border-amber-500/30 rounded-3xl p-5 sm:p-6 cursor-pointer hover:border-amber-500/50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Award className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Crown className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs text-amber-400 font-bold uppercase tracking-wider">Experimente Gratuitamente</div>
-              <div className="text-sm font-bold text-white">Desbloqueie o Treino em Casa Premium</div>
-              <div className="text-xs text-zinc-400">7 dias grátis · Sem cartão de crédito necessário nesta versão de teste</div>
+              <div className="text-xs text-amber-400 font-bold uppercase tracking-wider">Planos Pagos Disponíveis</div>
+              <div className="text-sm font-bold text-white mt-0.5">
+                Plano Pro (R$ 9,90/mês) ou VIP com Dieta (R$ 17,90/mês)
+              </div>
+              <div className="text-xs text-zinc-400 mt-0.5">
+                Escolha o plano ideal: acesso total a todos os treinos ou o pacote completo com nutrição.
+              </div>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-bold text-amber-400">
+            <span>Conhecer Planos</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
         </div>
       )}
     </div>

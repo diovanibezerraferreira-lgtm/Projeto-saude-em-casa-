@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DayWorkout, UserProfile, WeightRecord, CompletedWorkout } from '../types';
+import { DayWorkout, UserProfile, WeightRecord, CompletedWorkout, SubscriptionTier } from '../types';
 import { generate30DaysProgram } from '../data/workoutProgram';
 import { soundEffects } from '../utils/sound';
+
+export type AppTab = 'home' | 'workouts' | 'diet' | 'gifs' | 'progress' | 'profile' | 'plans';
 
 interface WorkoutContextType {
   program: DayWorkout[];
@@ -12,10 +14,13 @@ interface WorkoutContextType {
   weightRecords: WeightRecord[];
   activeWorkoutDay: DayWorkout | null;
   soundMuted: boolean;
-  selectedTab: 'home' | 'workouts' | 'gifs' | 'progress' | 'profile' | 'plans';
+  selectedTab: AppTab;
   isSubscriptionModalOpen: boolean;
-  setSelectedTab: (tab: 'home' | 'workouts' | 'gifs' | 'progress' | 'profile' | 'plans') => void;
-  openSubscriptionModal: () => void;
+  modalSuggestedTier: 'pro' | 'vip_diet';
+  waterIntakeMl: number;
+  checkedMeals: string[];
+  setSelectedTab: (tab: AppTab) => void;
+  openSubscriptionModal: (suggestedTier?: 'pro' | 'vip_diet') => void;
   closeSubscriptionModal: () => void;
   startWorkout: (dayNumber: number) => void;
   exitWorkout: () => void;
@@ -25,7 +30,11 @@ interface WorkoutContextType {
   addWeightRecord: (weight: number, date?: string, note?: string) => void;
   deleteWeightRecord: (id: string) => void;
   toggleSound: () => void;
-  upgradeToPremium: (active: boolean) => void;
+  upgradeToPremium: (active: boolean, tier?: 'pro' | 'vip_diet') => void;
+  setSubscriptionTier: (tier: SubscriptionTier) => void;
+  addWater: (amountMl: number) => void;
+  resetWater: () => void;
+  toggleMealCheck: (mealKey: string) => void;
   resetProgress: () => void;
 }
 
@@ -35,6 +44,8 @@ const STORAGE_KEYS = {
   WORKOUTS: 'treino_em_casa_completed_workouts_v1',
   WEIGHT_RECORDS: 'treino_em_casa_weights_v1',
   SOUND_MUTED: 'treino_em_casa_sound_muted_v1',
+  WATER_INTAKE: 'treino_em_casa_water_intake_v1',
+  CHECKED_MEALS: 'treino_em_casa_checked_meals_v1',
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -45,6 +56,7 @@ const DEFAULT_PROFILE: UserProfile = {
   targetWeight: 72.0,
   heightCm: 172,
   experienceLevel: 'iniciante',
+  subscriptionTier: 'free',
   isPremium: false,
   streakDays: 3,
 };
@@ -82,17 +94,45 @@ const WorkoutContext = createContext<WorkoutContextType | null>(null);
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [program] = useState<DayWorkout[]>(() => generate30DaysProgram());
-  const [selectedTab, setSelectedTab] = useState<'home' | 'workouts' | 'gifs' | 'progress' | 'profile' | 'plans'>('home');
+  const [selectedTab, setSelectedTab] = useState<AppTab>('home');
   const [activeWorkoutDay, setActiveWorkoutDay] = useState<DayWorkout | null>(null);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
+  const [modalSuggestedTier, setModalSuggestedTier] = useState<'pro' | 'vip_diet'>('vip_diet');
 
   // Load from local storage or fallback to defaults
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const tier = parsed.subscriptionTier || (parsed.isPremium ? 'pro' : 'free');
+        return {
+          ...parsed,
+          subscriptionTier: tier,
+          isPremium: tier !== 'free',
+        };
+      }
+      return DEFAULT_PROFILE;
     } catch {
       return DEFAULT_PROFILE;
+    }
+  });
+
+  const [waterIntakeMl, setWaterIntakeMl] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.WATER_INTAKE);
+      return saved ? parseInt(saved, 10) || 0 : 750;
+    } catch {
+      return 750;
+    }
+  });
+
+  const [checkedMeals, setCheckedMeals] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CHECKED_MEALS);
+      return saved ? JSON.parse(saved) : ['m1-1'];
+    } catch {
+      return ['m1-1'];
     }
   });
 
@@ -132,7 +172,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   // Calculate current active day (first uncompleted day or day 1)
-  const currentDay = Math.min(30, (completedDays.length > 0 ? Math.max(...completedDays) + 1 : 1));
+  const currentDay = Math.min(program.length || 210, (completedDays.length > 0 ? Math.max(...completedDays) + 1 : 1));
 
   // Sync state to local storage
   useEffect(() => {
@@ -168,6 +208,22 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [weightRecords]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.WATER_INTAKE, waterIntakeMl.toString());
+    } catch {
+      // storage unavailable
+    }
+  }, [waterIntakeMl]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.CHECKED_MEALS, JSON.stringify(checkedMeals));
+    } catch {
+      // storage unavailable
+    }
+  }, [checkedMeals]);
+
+  useEffect(() => {
     soundEffects.isMuted = soundMuted;
     try {
       localStorage.setItem(STORAGE_KEYS.SOUND_MUTED, soundMuted ? 'true' : 'false');
@@ -181,6 +237,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const startWorkout = (dayNumber: number) => {
+    if (dayNumber > 7 && !userProfile.isPremium) {
+      openSubscriptionModal('pro');
+      return;
+    }
     const workout = program.find((w) => w.day === dayNumber);
     if (workout) {
       setActiveWorkoutDay(workout);
@@ -264,11 +324,35 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setWeightRecords((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const upgradeToPremium = (active: boolean) => {
+  const setSubscriptionTier = (tier: SubscriptionTier) => {
     setUserProfile((prev) => ({
       ...prev,
-      isPremium: active
+      subscriptionTier: tier,
+      isPremium: tier !== 'free',
     }));
+  };
+
+  const upgradeToPremium = (active: boolean, tier: 'pro' | 'vip_diet' = 'vip_diet') => {
+    setSubscriptionTier(active ? tier : 'free');
+  };
+
+  const addWater = (amountMl: number) => {
+    setWaterIntakeMl((prev) => Math.max(0, prev + amountMl));
+  };
+
+  const resetWater = () => {
+    setWaterIntakeMl(0);
+  };
+
+  const toggleMealCheck = (mealKey: string) => {
+    setCheckedMeals((prev) => {
+      if (prev.includes(mealKey)) {
+        return prev.filter((k) => k !== mealKey);
+      } else {
+        soundEffects.playCelebration();
+        return [...prev, mealKey];
+      }
+    });
   };
 
   const resetProgress = () => {
@@ -276,9 +360,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCompletedWorkouts([]);
     setWeightRecords(DEFAULT_WEIGHT_RECORDS);
     setUserProfile(DEFAULT_PROFILE);
+    setWaterIntakeMl(750);
+    setCheckedMeals(['m1-1']);
   };
 
-  const openSubscriptionModal = () => setIsSubscriptionModalOpen(true);
+  const openSubscriptionModal = (suggestedTier: 'pro' | 'vip_diet' = 'vip_diet') => {
+    setModalSuggestedTier(suggestedTier);
+    setIsSubscriptionModalOpen(true);
+  };
   const closeSubscriptionModal = () => setIsSubscriptionModalOpen(false);
 
   return (
@@ -294,6 +383,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         soundMuted,
         selectedTab,
         isSubscriptionModalOpen,
+        modalSuggestedTier,
+        waterIntakeMl,
+        checkedMeals,
         setSelectedTab,
         openSubscriptionModal,
         closeSubscriptionModal,
@@ -306,6 +398,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteWeightRecord,
         toggleSound,
         upgradeToPremium,
+        setSubscriptionTier,
+        addWater,
+        resetWater,
+        toggleMealCheck,
         resetProgress
       }}
     >

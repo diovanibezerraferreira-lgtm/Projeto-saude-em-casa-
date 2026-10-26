@@ -54,6 +54,8 @@ export type FitnessGoal =
   | 'disposicao'
   | 'saude_postura';
 
+export type SubscriptionTier = 'free' | 'pro' | 'vip_diet';
+
 export interface UserProfile {
   name: string;
   goal: FitnessGoal;
@@ -62,8 +64,10 @@ export interface UserProfile {
   targetWeight: number;
   heightCm: number;
   experienceLevel: 'iniciante' | 'intermediario';
+  subscriptionTier: SubscriptionTier;
   isPremium: boolean;
   streakDays: number;
+  dailyWaterTargetMl?: number;
 }
 
 export interface WeightRecord {
