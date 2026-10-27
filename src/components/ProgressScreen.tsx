@@ -12,20 +12,30 @@ import {
   Target,
   Sparkles,
   X,
-  Cloud
+  Cloud,
+  ClipboardCheck,
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { GoogleDriveSync } from './GoogleDriveSync';
 
 export const ProgressScreen: React.FC = () => {
   const { 
+    program,
     completedDays, 
     userProfile, 
     weightRecords, 
     addWeightRecord, 
     deleteWeightRecord, 
     toggleDayManualCompletion,
-    startWorkout 
+    startWorkout,
+    weekAssessments,
+    openAssessmentModal,
+    currentDay
   } = useWorkout();
+
+  const [calendarPage, setCalendarPage] = useState<number>(0); // 0 = Days 1-35, 1 = Days 36-70, etc.
 
   // Weight record dialog modal state
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
@@ -310,53 +320,82 @@ export const ProgressScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* 30-Day Completion Calendar */}
+      {/* 420-Day / 60-Week Completion Calendar */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <CalendarIcon className="w-4 h-4 text-emerald-400" />
-              <span>Calendário dos 30 Dias</span>
+              <span>Calendário do Programa (60 Semanas · 420 Dias)</span>
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Toque em qualquer dia para ver os detalhes ou marcar como concluído.
+              Dias {calendarPage * 35 + 1} a {Math.min(program.length, (calendarPage + 1) * 35)} · Etapa {calendarPage < 6 ? '1 (Semanas 1-30)' : '2 (Semanas 31-60)'}
             </p>
           </div>
-          <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-            {completedDays.length} / 30 Feitos
-          </span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCalendarPage(Math.max(0, calendarPage - 1))}
+              disabled={calendarPage === 0}
+              className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-zinc-300"
+              title="Bloco Anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-bold text-emerald-400 px-1">
+              Bloco {calendarPage + 1} de 12
+            </span>
+            <button
+              onClick={() => setCalendarPage(Math.min(11, calendarPage + 1))}
+              disabled={calendarPage >= 11}
+              className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-zinc-300"
+              title="Próximo Bloco"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 ml-2">
+              {completedDays.length} / {program.length} Feitos
+            </span>
+          </div>
         </div>
 
-        {/* 30-day grid */}
-        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-2">
-          {Array.from({ length: 30 }, (_, i) => i + 1).map((dayNum) => {
-            const isCompleted = completedDays.includes(dayNum);
-            const isRestDay = [4, 7, 11, 14, 18, 21, 25].includes(dayNum);
+        {/* 35-day grid for current calendar page */}
+        <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
+          {Array.from({ length: 35 }, (_, i) => calendarPage * 35 + i + 1)
+            .filter((dayNum) => dayNum <= program.length)
+            .map((dayNum) => {
+              const workout = program.find((w) => w.day === dayNum);
+              const isCompleted = completedDays.includes(dayNum);
+              const isCurrent = dayNum === currentDay;
+              const isRestDay = workout?.isRestDay ?? false;
 
-            return (
-              <button
-                key={dayNum}
-                onClick={() => toggleDayManualCompletion(dayNum)}
-                className={`h-14 rounded-2xl flex flex-col items-center justify-center p-1 relative border transition-all active:scale-95 ${
-                  isCompleted
-                    ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-sm'
-                    : isRestDay
-                      ? 'bg-zinc-800/40 border-teal-500/30 text-teal-400 hover:bg-zinc-800'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                }`}
-                title={`Dia ${dayNum} - ${isCompleted ? 'Concluído' : 'Pendente'}`}
-              >
-                <span className="text-[10px] font-medium opacity-70">Dia</span>
-                <span className="text-sm font-bold tabular-nums">{dayNum}</span>
-                {isCompleted && (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 absolute top-1 right-1" />
-                )}
-                {isRestDay && !isCompleted && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 absolute bottom-1" />
-                )}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={dayNum}
+                  onClick={() => toggleDayManualCompletion(dayNum)}
+                  className={`h-14 rounded-2xl flex flex-col items-center justify-center p-1 relative border transition-all active:scale-95 ${
+                    isCompleted
+                      ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-sm'
+                      : isCurrent
+                        ? 'bg-zinc-800 border-2 border-emerald-400 text-white'
+                        : isRestDay
+                          ? 'bg-zinc-800/40 border-teal-500/30 text-teal-400 hover:bg-zinc-800'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                  }`}
+                  title={`Dia ${dayNum} - ${isCompleted ? 'Concluído' : 'Pendente'}`}
+                >
+                  <span className="text-[10px] font-medium opacity-70">Dia</span>
+                  <span className="text-sm font-bold tabular-nums">{dayNum}</span>
+                  {isCompleted && (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 absolute top-1 right-1" />
+                  )}
+                  {isRestDay && !isCompleted && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 absolute bottom-1" />
+                  )}
+                </button>
+              );
+            })}
         </div>
 
         <div className="flex items-center justify-center gap-6 text-[11px] text-zinc-400 pt-2 border-t border-zinc-800/80">
@@ -366,13 +405,100 @@ export const ProgressScreen: React.FC = () => {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-zinc-800/40 border border-teal-500/30" />
-            <span>Descanso Ativo</span>
+            <span>Descanso</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-zinc-900 border border-zinc-800" />
             <span>Pendente</span>
           </div>
         </div>
+      </div>
+
+      {/* Avaliações de Passagem Realizadas */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="w-5 h-5 text-emerald-400" />
+            <div>
+              <h2 className="text-base font-bold text-white">Avaliações de Passagem</h2>
+              <p className="text-xs text-zinc-400">
+                Respostas aos 4 critérios de transição entre semanas e etapas
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => openAssessmentModal(Math.max(1, Math.ceil(currentDay / 7)))}
+            className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 transition-colors"
+          >
+            Fazer Avaliação
+          </button>
+        </div>
+
+        {weekAssessments.length === 0 ? (
+          <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-4 text-center">
+            <p className="text-xs text-zinc-400">
+              Nenhuma avaliação registrada ainda. A cada 7 dias de treino concluídos, você responde às 4 perguntas de passagem para validar sua evolução!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {[...weekAssessments]
+              .sort((a, b) => b.week - a.week)
+              .map((assessment) => (
+                <div
+                  key={assessment.id || assessment.week}
+                  className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-4 space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">
+                        Semana {assessment.week}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        assessment.actionChoice === 'avancar'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}>
+                        {assessment.actionChoice === 'avancar' ? 'Liberado para Avançar' : 'Repetindo Etapa'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-500">{new Date(assessment.date).toLocaleDateString('pt-BR')}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="bg-zinc-900/60 p-2 rounded-xl">
+                      <span className="text-zinc-400 block text-[10px]">Concluiu a maioria dos treinos:</span>
+                      <span className="text-zinc-200 font-medium capitalize">
+                        {assessment.completedMost === 'sim' ? 'Sim, todos ou quase todos' : assessment.completedMost === 'metade' ? 'Mais da metade' : 'Poucos treinos'}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-900/60 p-2 rounded-xl">
+                      <span className="text-zinc-400 block text-[10px]">Dificuldade dos exercícios:</span>
+                      <span className="text-zinc-200 font-medium capitalize">
+                        {assessment.difficulty === 'facil' ? 'Fácil/Tranquilo' : assessment.difficulty === 'ideal' ? 'Ideal e desafiador' : 'Muito difícil/Extenuante'}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-900/60 p-2 rounded-xl">
+                      <span className="text-zinc-400 block text-[10px]">Sentiu que consegue avançar:</span>
+                      <span className="text-zinc-200 font-medium capitalize">
+                        {assessment.canAdvance === 'sim' ? 'Sim, 100% pronto' : assessment.canAdvance === 'medio' ? 'Sim, mas com esforço' : 'Preciso de mais tempo'}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-900/60 p-2 rounded-xl">
+                      <span className="text-zinc-400 block text-[10px]">Deseja continuar ou repetir:</span>
+                      <span className="text-zinc-200 font-medium capitalize">
+                        {assessment.actionChoice === 'avancar' ? 'Continuar e avançar etapa' : 'Repetir esta etapa'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
 
       {/* Weight History Table */}

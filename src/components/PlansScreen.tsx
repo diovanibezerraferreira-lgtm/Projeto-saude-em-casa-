@@ -179,7 +179,7 @@ export const PlansScreen: React.FC = () => {
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Acesso irrestrito a todas as 30 semanas, de 15 a 30 exercícios por dia com 5 tipos de treino rotativos.
+              Acesso irrestrito a todas as 60 semanas (420 dias), de 15 a 30 exercícios por dia com 5 tipos de treino rotativos e avaliação semanal.
             </p>
 
             <div className="pt-2">
@@ -201,7 +201,15 @@ export const PlansScreen: React.FC = () => {
             <div className="space-y-2.5 pt-3 border-t border-zinc-800 text-xs text-zinc-200">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span><strong>Todas as 30 semanas</strong> (210 dias de 15 a 30 exercícios)</span>
+                <span><strong>Todas as 60 semanas</strong> (420 dias de 15 a 30 exercícios)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Etapa 1 (Semanas 1-30) + Etapa 2 (Semanas 31-60)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Avaliações de Passagem a cada semana e transição de etapa</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -264,7 +272,7 @@ export const PlansScreen: React.FC = () => {
             </div>
 
             <p className="text-xs text-zinc-300 leading-relaxed">
-              A fórmula completa: todas as 30 semanas de treinos somadas ao cardápio de dieta personalizado.
+              A fórmula completa: todas as 60 semanas de treinos (Etapas 1 e 2) somadas ao cardápio de dieta personalizado.
             </p>
 
             <div className="pt-2">
@@ -286,7 +294,11 @@ export const PlansScreen: React.FC = () => {
             <div className="space-y-2.5 pt-3 border-t border-zinc-800 text-xs text-zinc-200">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span><strong>Tudo do Plano Pro</strong> (todos os 30 dias de treinos)</span>
+                <span><strong>Tudo do Plano Pro</strong> (60 semanas / 420 dias de treinos)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Etapas 1 e 2 completas com avaliação semanal de passagem</span>
               </div>
               <div className="flex items-center gap-2">
                 <Utensils className="w-4 h-4 text-amber-400 shrink-0" />
@@ -354,8 +366,8 @@ export const PlansScreen: React.FC = () => {
               <tr>
                 <td className="py-3 px-3">Programa de Treino</td>
                 <td className="py-3 px-3 text-center text-zinc-400">7 dias iniciais</td>
-                <td className="py-3 px-3 text-center text-emerald-400 font-bold">30 semanas (210 dias)</td>
-                <td className="py-3 px-3 text-center text-amber-400 font-bold">30 semanas (210 dias)</td>
+                <td className="py-3 px-3 text-center text-emerald-400 font-bold">60 semanas (420 dias)</td>
+                <td className="py-3 px-3 text-center text-amber-400 font-bold">60 semanas (420 dias)</td>
               </tr>
               <tr>
                 <td className="py-3 px-3">Exercícios por Treino</td>

@@ -183,13 +183,13 @@ export const HomeScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* 30-Week Program Progression Card */}
+      {/* 60-Week Program Progression Card */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">Progresso do Desafio 30 Semanas</h3>
+            <h3 className="text-base font-bold text-white">Progresso do Desafio de 60 Semanas (420 Dias)</h3>
             <p className="text-xs text-zinc-400">
-              {completedDays.length} de {program.length} dias completados ({Math.max(0, program.length - completedDays.length)} dias restantes · Semana {currentWeekNum} de 30)
+              {completedDays.length} de {program.length} dias completados ({Math.max(0, program.length - completedDays.length)} dias restantes · Semana {currentWeekNum} de 60 · Etapa {currentWeekNum <= 30 ? '1' : '2'})
             </p>
           </div>
           <button

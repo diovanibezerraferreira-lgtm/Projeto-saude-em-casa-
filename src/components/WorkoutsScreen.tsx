@@ -19,7 +19,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
-  Dumbbell
+  Dumbbell,
+  ClipboardCheck,
+  Award,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle
 } from 'lucide-react';
 
 export const WorkoutsScreen: React.FC = () => {
@@ -30,18 +35,25 @@ export const WorkoutsScreen: React.FC = () => {
     startWorkout, 
     toggleDayManualCompletion,
     userProfile,
-    openSubscriptionModal
+    openSubscriptionModal,
+    weekAssessments,
+    openAssessmentModal,
+    unlockedStage
   } = useWorkout();
 
-  // Current week based on user's current progress
-  const currentWeekNumber = Math.min(30, Math.ceil(currentDay / 7));
+  // Current week based on user's current progress (1 to 60)
+  const currentWeekNumber = Math.min(60, Math.max(1, Math.ceil(currentDay / 7)));
+  
+  // Selected stage: 1 (weeks 1-30), 2 (weeks 31-60), or 'all'
+  const [selectedStage, setSelectedStage] = useState<1 | 2 | 'all'>(currentWeekNumber > 30 ? 2 : 1);
   const [selectedWeek, setSelectedWeek] = useState<number | 'all'>(currentWeekNumber);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [expandedDay, setExpandedDay] = useState<number | null>(currentDay);
   const [previewGifExercise, setPreviewGifExercise] = useState<Exercise | null>(null);
 
-  // Filter program by week and completion status
+  // Filter program by stage, week and completion status
   const filteredWorkouts = program.filter((w) => {
+    if (selectedStage !== 'all' && (w.stage || 1) !== selectedStage) return false;
     if (selectedWeek !== 'all' && w.week !== selectedWeek) return false;
     const isCompleted = completedDays.includes(w.day);
     if (filterStatus === 'completed' && !isCompleted) return false;
@@ -49,15 +61,17 @@ export const WorkoutsScreen: React.FC = () => {
     return true;
   });
 
-  // Find phase of selected week
+  // Active week number for display
   const activeWeekNum = selectedWeek === 'all' ? currentWeekNumber : selectedWeek;
   const currentPhase = PROGRAM_PHASES.find(
     (p) => activeWeekNum >= p.startWeek && activeWeekNum <= p.endWeek
   ) || PROGRAM_PHASES[0];
 
+  const currentWeekAssessment = weekAssessments.find((a) => a.week === activeWeekNum);
+
   const handlePrevWeek = () => {
     if (selectedWeek === 'all') {
-      setSelectedWeek(1);
+      setSelectedWeek(selectedStage === 2 ? 31 : 1);
     } else if (selectedWeek > 1) {
       setSelectedWeek(selectedWeek - 1);
     }
@@ -65,11 +79,17 @@ export const WorkoutsScreen: React.FC = () => {
 
   const handleNextWeek = () => {
     if (selectedWeek === 'all') {
-      setSelectedWeek(1);
-    } else if (selectedWeek < 30) {
+      setSelectedWeek(selectedStage === 2 ? 31 : 1);
+    } else if (selectedWeek < 60) {
       setSelectedWeek(selectedWeek + 1);
     }
   };
+
+  const weekList = selectedStage === 1 
+    ? Array.from({ length: 30 }, (_, i) => i + 1)
+    : selectedStage === 2
+      ? Array.from({ length: 30 }, (_, i) => i + 31)
+      : Array.from({ length: 60 }, (_, i) => i + 1);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -77,14 +97,152 @@ export const WorkoutsScreen: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Cronograma Oficial de 30 Semanas</span>
+          <span>Cronograma Oficial de 60 Semanas (420 Dias)</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-0.5">
-          Programa Completo de 30 Semanas (210 Dias)
+          Treinos Funcionais & Evolução Guiada
         </h1>
         <p className="text-sm text-zinc-400 mt-1 max-w-3xl leading-relaxed">
-          5 tipos de treino em rotação contínua (Treino A, B, C, D e E). Começa com 15 exercícios no Dia 1 e evolui gradualmente dia após dia até 30 exercícios com intensidade crescente!
+          5 tipos de treino em rotação diária (A, B, C, D e E). Começa com 15 exercícios no Dia 1 e sobe gradativamente até 30 exercícios por dia, dividido em duas grandes etapas com avaliação semanal de passagem!
         </p>
+      </div>
+
+      {/* Stage Selector (Etapa 1 vs Etapa 2) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          onClick={() => {
+            setSelectedStage(1);
+            if (typeof selectedWeek === 'number' && selectedWeek > 30) {
+              setSelectedWeek(1);
+            }
+          }}
+          className={`p-4 rounded-3xl border text-left transition-all relative overflow-hidden ${
+            selectedStage === 1
+              ? 'bg-gradient-to-br from-emerald-950/40 via-zinc-900 to-zinc-900 border-emerald-500/60 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/40'
+              : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              Etapa 1
+            </span>
+            <span className="text-xs text-zinc-400">Semanas 1 a 30 (210 Dias)</span>
+          </div>
+          <h3 className="text-base font-bold text-white mt-2">Fundação & Transformação</h3>
+          <p className="text-xs text-zinc-400 mt-1">
+            Progressão de 15 a 30 exercícios com 5 tipos de treino em rotação e adaptação motora.
+          </p>
+          <div className="flex items-center gap-2 mt-3 text-xs font-semibold text-emerald-400">
+            <span>{Math.min(210, completedDays.filter(d => d <= 210).length)}/210 dias concluídos</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            setSelectedStage(2);
+            if (typeof selectedWeek === 'number' && selectedWeek <= 30) {
+              setSelectedWeek(31);
+            }
+          }}
+          className={`p-4 rounded-3xl border text-left transition-all relative overflow-hidden ${
+            selectedStage === 2
+              ? 'bg-gradient-to-br from-indigo-950/40 via-zinc-900 to-zinc-900 border-indigo-500/60 shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500/40'
+              : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/30">
+              Etapa 2 (Avançada)
+            </span>
+            <span className="text-xs text-zinc-400">Semanas 31 a 60 (210 Dias)</span>
+          </div>
+          <h3 className="text-base font-bold text-white mt-2">Elite Funcional & Definição</h3>
+          <p className="text-xs text-zinc-400 mt-1">
+            30 exercícios por dia, intensidade de calistenia avançada e super séries funcionais.
+          </p>
+          <div className="flex items-center gap-2 mt-3 text-xs font-semibold text-indigo-400">
+            <span>{completedDays.filter(d => d > 210).length}/210 dias concluídos</span>
+            {unlockedStage >= 2 ? (
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">Desbloqueada</span>
+            ) : (
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">Requer Etapa 1</span>
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Avaliação de Passagem Card / Banner */}
+      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-emerald-500/30 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-0" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <ClipboardCheck className="w-3.5 h-3.5" />
+                Avaliação de Passagem
+              </span>
+              <span className="text-xs text-zinc-400">
+                Semana {activeWeekNum} de 60
+              </span>
+            </div>
+
+            <h3 className="text-lg font-bold text-white">
+              {activeWeekNum === 30 
+                ? '⭐ Grande Avaliação de Conclusão da Etapa 1 (Semana 30)!'
+                : `Avaliação de Transição da Semana ${activeWeekNum}`}
+            </h3>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Para passar de uma semana para a outra (e da Etapa 1 para a Etapa 2), o app avalia 4 critérios essenciais:
+            </p>
+
+            {/* 4 Questions preview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div className="flex items-center gap-2 text-xs text-zinc-300 bg-zinc-800/40 px-2.5 py-1.5 rounded-xl border border-zinc-800">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>1. Conclusão da maioria dos treinos</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-zinc-300 bg-zinc-800/40 px-2.5 py-1.5 rounded-xl border border-zinc-800">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>2. Dificuldade dos exercícios</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-zinc-300 bg-zinc-800/40 px-2.5 py-1.5 rounded-xl border border-zinc-800">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>3. Sensação se consegue avançar</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-zinc-300 bg-zinc-800/40 px-2.5 py-1.5 rounded-xl border border-zinc-800">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>4. Desejo de avançar ou repetir etapa</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end justify-center gap-2.5 shrink-0">
+            {currentWeekAssessment ? (
+              <div className="flex flex-col items-center md:items-end gap-1.5">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                  <ShieldCheck className="w-4 h-4" />
+                  {currentWeekAssessment.actionChoice === 'avancar' ? 'Aprovado para Avançar' : 'Etapa em Repetição'}
+                </span>
+                <button
+                  onClick={() => openAssessmentModal(activeWeekNum)}
+                  className="text-xs text-zinc-400 hover:text-white underline underline-offset-4 py-1"
+                >
+                  Refazer Avaliação da Semana {activeWeekNum}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => openAssessmentModal(activeWeekNum)}
+                className="min-h-[44px] px-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+              >
+                <Award className="w-4 h-4" />
+                <span>Fazer Avaliação da Semana {activeWeekNum}</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Week Navigator & Controller */}
@@ -94,6 +252,9 @@ export const WorkoutsScreen: React.FC = () => {
             <Layers className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-bold text-white uppercase tracking-wider">
               {currentPhase.name}
+            </span>
+            <span className="text-[11px] text-zinc-500">
+              ({activeWeekNum <= 30 ? 'Etapa 1' : 'Etapa 2'})
             </span>
           </div>
 
@@ -108,12 +269,14 @@ export const WorkoutsScreen: React.FC = () => {
             </button>
 
             <span className="text-xs font-bold text-emerald-400 tabular-nums px-2">
-              {selectedWeek === 'all' ? 'Todas as 30 Semanas' : `Semana ${selectedWeek} de 30`}
+              {selectedWeek === 'all' 
+                ? (selectedStage === 'all' ? 'Todas as 60 Semanas' : `Todas da Etapa ${selectedStage}`) 
+                : `Semana ${selectedWeek} de 60`}
             </span>
 
             <button
               onClick={handleNextWeek}
-              disabled={selectedWeek === 30}
+              disabled={selectedWeek === 60}
               className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:pointer-events-none text-zinc-300 transition-colors"
               title="Próxima Semana"
             >
@@ -122,7 +285,7 @@ export const WorkoutsScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* 30 Weeks Scrollable Strip */}
+        {/* Scrollable Week Strip */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-t border-zinc-800 pt-3">
           <button
             onClick={() => setSelectedWeek('all')}
@@ -132,18 +295,19 @@ export const WorkoutsScreen: React.FC = () => {
                 : 'bg-zinc-800/60 text-zinc-400 hover:text-white'
             }`}
           >
-            Todas as 30 Semanas
+            {selectedStage === 'all' ? 'Todas as 60 Semanas' : `Ver Todas da Etapa ${selectedStage}`}
           </button>
 
-          {Array.from({ length: 30 }, (_, i) => i + 1).map((wk) => {
+          {weekList.map((wk) => {
             const isCurrentWk = Math.ceil(currentDay / 7) === wk;
             const isSelected = selectedWeek === wk;
+            const hasAssessment = weekAssessments.some((a) => a.week === wk);
 
             return (
               <button
                 key={wk}
                 onClick={() => setSelectedWeek(wk)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   isSelected
                     ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
                     : isCurrentWk
@@ -152,7 +316,9 @@ export const WorkoutsScreen: React.FC = () => {
                 }`}
               >
                 <span>Semana {wk}</span>
-                {isCurrentWk && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                {hasAssessment && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-zinc-950' : 'bg-emerald-400'}`} />
+                )}
               </button>
             );
           })}
@@ -191,7 +357,7 @@ export const WorkoutsScreen: React.FC = () => {
               filterStatus === 'all' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            Filtrados ({filteredWorkouts.length})
+            Treinos ({filteredWorkouts.length})
           </button>
           <button
             onClick={() => setFilterStatus('pending')}
@@ -223,6 +389,7 @@ export const WorkoutsScreen: React.FC = () => {
           const isCurrent = workout.day === currentDay;
           const isExpanded = expandedDay === workout.day;
           const isLocked = workout.day > 7 && !userProfile.isPremium;
+          const isStage2 = (workout.stage || 1) === 2;
 
           return (
             <div
@@ -258,11 +425,17 @@ export const WorkoutsScreen: React.FC = () => {
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-emerald-400 font-semibold">{workout.focus}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        isStage2 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-emerald-500/15 text-emerald-400'
+                      }`}>
+                        Etapa {workout.stage || 1}
+                      </span>
                       <span className="text-zinc-600">·</span>
                       <span className="text-zinc-400">Semana {workout.week}</span>
+                      <span className="text-zinc-600">·</span>
+                      <span className="text-emerald-400 font-semibold">{workout.focus}</span>
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                    <h3 className="text-sm sm:text-base font-bold text-white truncate mt-0.5">
                       {workout.title}
                     </h3>
                     <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5">
@@ -387,7 +560,7 @@ export const WorkoutsScreen: React.FC = () => {
                         className="flex-1 min-h-[48px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold rounded-xl flex items-center justify-center gap-2 text-sm shadow-md shadow-amber-500/20 active:scale-98 transition-transform"
                       >
                         <Lock className="w-4 h-4" />
-                        <span>Desbloquear Programa de 30 Semanas (Plano Pro ou VIP)</span>
+                        <span>Desbloquear Programa Completo (Plano Pro ou VIP)</span>
                       </button>
                     ) : (
                       <button

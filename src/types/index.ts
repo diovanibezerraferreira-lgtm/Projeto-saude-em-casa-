@@ -38,6 +38,7 @@ export interface Exercise {
 export interface DayWorkout {
   day: number;
   week: number;
+  stage?: 1 | 2;
   title: string;
   focus: string;
   description: string;
@@ -85,4 +86,16 @@ export interface CompletedWorkout {
   durationSeconds: number;
   caloriesBurned: number;
   totalExercises: number;
+}
+
+export interface WeekAssessment {
+  id: string;
+  week: number;
+  date: string;
+  completedMost: 'sim' | 'metade' | 'pouco';
+  difficulty: 'facil' | 'ideal' | 'dificil';
+  canAdvance: 'sim' | 'medio' | 'nao';
+  actionChoice: 'avancar' | 'repetir';
+  stage: 1 | 2;
+  feedbackNote?: string;
 }

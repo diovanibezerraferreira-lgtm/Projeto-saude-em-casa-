@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DayWorkout, UserProfile, WeightRecord, CompletedWorkout, SubscriptionTier } from '../types';
-import { generate30DaysProgram } from '../data/workoutProgram';
+import { DayWorkout, UserProfile, WeightRecord, CompletedWorkout, SubscriptionTier, WeekAssessment } from '../types';
+import { generate60WeeksProgram } from '../data/workoutProgram';
 import { soundEffects } from '../utils/sound';
 
 export type AppTab = 'home' | 'workouts' | 'diet' | 'gifs' | 'progress' | 'profile' | 'plans';
@@ -19,9 +19,17 @@ interface WorkoutContextType {
   modalSuggestedTier: 'pro' | 'vip_diet';
   waterIntakeMl: number;
   checkedMeals: string[];
+  weekAssessments: WeekAssessment[];
+  isAssessmentModalOpen: boolean;
+  assessmentWeekNumber: number;
+  unlockedStage: number;
   setSelectedTab: (tab: AppTab) => void;
   openSubscriptionModal: (suggestedTier?: 'pro' | 'vip_diet') => void;
   closeSubscriptionModal: () => void;
+  openAssessmentModal: (week?: number) => void;
+  closeAssessmentModal: () => void;
+  submitWeekAssessment: (assessment: WeekAssessment) => void;
+  unlockStage2: () => void;
   startWorkout: (dayNumber: number) => void;
   exitWorkout: () => void;
   finishWorkout: (dayNumber: number, durationSeconds: number, caloriesBurned: number) => void;
@@ -46,6 +54,8 @@ const STORAGE_KEYS = {
   SOUND_MUTED: 'treino_em_casa_sound_muted_v1',
   WATER_INTAKE: 'treino_em_casa_water_intake_v1',
   CHECKED_MEALS: 'treino_em_casa_checked_meals_v1',
+  ASSESSMENTS: 'treino_em_casa_assessments_v1',
+  UNLOCKED_STAGE: 'treino_em_casa_unlocked_stage_v1',
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -93,7 +103,7 @@ const DEFAULT_COMPLETED_WORKOUTS: CompletedWorkout[] = [
 const WorkoutContext = createContext<WorkoutContextType | null>(null);
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [program] = useState<DayWorkout[]>(() => generate30DaysProgram());
+  const [program] = useState<DayWorkout[]>(() => generate60WeeksProgram());
   const [selectedTab, setSelectedTab] = useState<AppTab>('home');
   const [activeWorkoutDay, setActiveWorkoutDay] = useState<DayWorkout | null>(null);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
@@ -135,6 +145,27 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return ['m1-1'];
     }
   });
+
+  const [weekAssessments, setWeekAssessments] = useState<WeekAssessment[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ASSESSMENTS);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [unlockedStage, setUnlockedStage] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.UNLOCKED_STAGE);
+      return saved ? parseInt(saved, 10) || 1 : 1;
+    } catch {
+      return 1;
+    }
+  });
+
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState<boolean>(false);
+  const [assessmentWeekNumber, setAssessmentWeekNumber] = useState<number>(1);
 
   const [completedDays, setCompletedDays] = useState<number[]>(() => {
     try {
@@ -222,6 +253,22 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // storage unavailable
     }
   }, [checkedMeals]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.ASSESSMENTS, JSON.stringify(weekAssessments));
+    } catch {
+      // storage unavailable
+    }
+  }, [weekAssessments]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.UNLOCKED_STAGE, unlockedStage.toString());
+    } catch {
+      // storage unavailable
+    }
+  }, [unlockedStage]);
 
   useEffect(() => {
     soundEffects.isMuted = soundMuted;
@@ -355,6 +402,34 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const openAssessmentModal = (week?: number) => {
+    const currentWeekNum = Math.ceil(currentDay / 7);
+    setAssessmentWeekNumber(week || currentWeekNum || 1);
+    setIsAssessmentModalOpen(true);
+  };
+
+  const closeAssessmentModal = () => {
+    setIsAssessmentModalOpen(false);
+  };
+
+  const unlockStage2 = () => {
+    setUnlockedStage(2);
+    soundEffects.playCelebration();
+  };
+
+  const submitWeekAssessment = (assessment: WeekAssessment) => {
+    setWeekAssessments((prev) => {
+      const filtered = prev.filter((a) => a.week !== assessment.week);
+      return [assessment, ...filtered];
+    });
+
+    if (assessment.week >= 30 && assessment.actionChoice === 'avancar') {
+      setUnlockedStage(2);
+    }
+
+    soundEffects.playCelebration();
+  };
+
   const resetProgress = () => {
     setCompletedDays([]);
     setCompletedWorkouts([]);
@@ -362,6 +437,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setUserProfile(DEFAULT_PROFILE);
     setWaterIntakeMl(750);
     setCheckedMeals(['m1-1']);
+    setWeekAssessments([]);
+    setUnlockedStage(1);
   };
 
   const openSubscriptionModal = (suggestedTier: 'pro' | 'vip_diet' = 'vip_diet') => {
@@ -386,9 +463,17 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         modalSuggestedTier,
         waterIntakeMl,
         checkedMeals,
+        weekAssessments,
+        isAssessmentModalOpen,
+        assessmentWeekNumber,
+        unlockedStage,
         setSelectedTab,
         openSubscriptionModal,
         closeSubscriptionModal,
+        openAssessmentModal,
+        closeAssessmentModal,
+        submitWeekAssessment,
+        unlockStage2,
         startWorkout,
         exitWorkout,
         finishWorkout,

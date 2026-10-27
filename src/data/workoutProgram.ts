@@ -658,33 +658,50 @@ export const WORKOUT_TYPES: WorkoutTypeDefinition[] = [
 
 // Fases do Programa de 30 Semanas
 export const PROGRAM_PHASES = [
-  { startWeek: 1, endWeek: 5, name: 'Fase 1: Adaptação, Postura & Despertar', desc: 'Aprender os movimentos corretos, ativar a musculatura e criar o hábito diário.' },
-  { startWeek: 6, endWeek: 10, name: 'Fase 2: Resistência & Ritmo Cardiorrespiratório', desc: 'Aumento gradual de repetições e ganho de fôlego com menor intervalo de descanso.' },
-  { startWeek: 11, endWeek: 15, name: 'Fase 3: Força Corporal & Tônus Muscular', desc: 'Isometria avançada, sustentação e queima muscular com foco em definição corporal.' },
-  { startWeek: 16, endWeek: 20, name: 'Fase 4: Queima Metabólica & Aceleração', desc: 'Exercícios combinados de alta eficiência calórica e maior tempo sob tensão.' },
-  { startWeek: 21, endWeek: 25, name: 'Fase 5: Domínio Funcional & Potência', desc: 'Controle motor refinado, estabilidade inabalável do core e resistência ampliada.' },
-  { startWeek: 26, endWeek: 30, name: 'Fase 6: Transformação Definitiva & Consolidação', desc: 'Ápice físico dos 210 dias: corpo tonificado, postura alinhada e saúde transformada.' }
+  // ETAPA 1: TRANSFORMAÇÃO & QUEIMA EM CASA (Semanas 1 a 30)
+  { stage: 1, startWeek: 1, endWeek: 5, name: 'Fase 1: Adaptação, Postura & Despertar', desc: 'Aprender os movimentos corretos, ativar a musculatura e criar o hábito diário.' },
+  { stage: 1, startWeek: 6, endWeek: 10, name: 'Fase 2: Resistência & Ritmo Cardiorrespiratório', desc: 'Aumento gradual de repetições e ganho de fôlego com menor intervalo de descanso.' },
+  { stage: 1, startWeek: 11, endWeek: 15, name: 'Fase 3: Força Corporal & Tônus Muscular', desc: 'Isometria avançada, sustentação e queima muscular com foco em definição corporal.' },
+  { stage: 1, startWeek: 16, endWeek: 20, name: 'Fase 4: Queima Metabólica & Aceleração', desc: 'Exercícios combinados de alta eficiência calórica e maior tempo sob tensão.' },
+  { stage: 1, startWeek: 21, endWeek: 25, name: 'Fase 5: Domínio Funcional & Potência', desc: 'Controle motor refinado, estabilidade inabalável do core e resistência ampliada.' },
+  { stage: 1, startWeek: 26, endWeek: 30, name: 'Fase 6: Transformação Definitiva & Conclusão Etapa 1', desc: 'Ápice físico dos 210 dias: corpo tonificado, postura alinhada e aprovação para a Etapa 2!' },
+
+  // ETAPA 2: ELITE FUNCIONAL & ALTA DEFINIÇÃO (Semanas 31 a 60)
+  { stage: 2, startWeek: 31, endWeek: 35, name: 'Fase 7: Choque de Intensidade Elite', desc: 'Início da Etapa 2: 30 exercícios de alta cadência e máxima ativação de fibras musculares.' },
+  { stage: 2, startWeek: 36, endWeek: 40, name: 'Fase 8: Isometria Profunda & Tônus Avançado', desc: 'Picos de contração isométrica para esculpir pernas, abdômen e membros superiores.' },
+  { stage: 2, startWeek: 41, endWeek: 45, name: 'Fase 9: Potência Calistênica & Fôlego Puro', desc: 'Circuitos aeróbicos e de força corporal que elevam o condicionamento cardiovascular.' },
+  { stage: 2, startWeek: 46, endWeek: 50, name: 'Fase 10: Densidade Muscular & Firmeza Total', desc: 'Séries completas com mínimo descanso e máxima precisão motora para queima extrema.' },
+  { stage: 2, startWeek: 51, endWeek: 55, name: 'Fase 11: Resistência Atlética Superior', desc: 'Nível avançado de resistência física sem equipamentos, comparável a treinos de atletas.' },
+  { stage: 2, startWeek: 56, endWeek: 60, name: 'Fase 12: Grande Vitória & Mestre dos 420 Dias', desc: 'A maior conquista de disciplina corporal: 60 semanas ininterruptas de saúde, força e definição!' }
 ];
 
-// GERADOR DO PROGRAMA COMPLETO DE 30 SEMANAS (210 DIAS)
+// GERADOR DO PROGRAMA COMPLETO DE 60 SEMANAS (420 DIAS)
 export function generate30DaysProgram(): DayWorkout[] {
-  return generate30WeeksProgram();
+  return generate60WeeksProgram();
 }
 
 export function generate30WeeksProgram(): DayWorkout[] {
+  return generate60WeeksProgram();
+}
+
+export function generate60WeeksProgram(): DayWorkout[] {
   const lib = EXERCISES_LIBRARY;
-  const totalWeeks = 30;
+  const totalWeeks = 60;
   const daysPerWeek = 7;
-  const totalDays = totalWeeks * daysPerWeek; // 210 dias
+  const totalDays = totalWeeks * daysPerWeek; // 420 dias
   const program: DayWorkout[] = [];
 
   for (let day = 1; day <= totalDays; day++) {
     const week = Math.ceil(day / 7);
+    const stage: 1 | 2 = week <= 30 ? 1 : 2;
     const dayOfWeek = ((day - 1) % 7) + 1; // 1 (Seg) a 7 (Dom)
 
-    // Quantidade de exercícios aumenta dia após dia: de 15 no Dia 1 até 30 exercícios!
-    // Dia 1 = 15, Dia 2 = 16, Dia 3 = 17 ... Dia 16 = 30, mantendo 30 a partir daí
-    const exerciseCount = Math.min(30, 15 + (day - 1));
+    // Quantidade de exercícios:
+    // Na Etapa 1: Dia 1 = 15, Dia 2 = 16 ... até 30 exercícios
+    // Na Etapa 2: Mantém 30 exercícios com intensidade avançada!
+    const exerciseCount = stage === 1 
+      ? Math.min(30, 15 + (day - 1))
+      : 30;
 
     // Determina a intensidade crescente dia após dia e semana após semana
     let baseIntensity: IntensityLevel = 'leve';
@@ -703,10 +720,18 @@ export function generate30WeeksProgram(): DayWorkout[] {
       baseIntensity = day % 2 === 0 ? 'intenso' : 'moderado';
       durationMultiplier = 1.25;
       restTime = 16;
-    } else { // Semanas 21 a 30
+    } else if (day <= 210) { // Semanas 21 a 30 (Fim Etapa 1)
       baseIntensity = 'intenso';
       durationMultiplier = 1.35;
       restTime = 15;
+    } else if (day <= 315) { // Semanas 31 a 45 (Início Etapa 2 Elite)
+      baseIntensity = 'intenso';
+      durationMultiplier = 1.45;
+      restTime = 15;
+    } else { // Semanas 46 a 60 (Elite Master)
+      baseIntensity = 'intenso';
+      durationMultiplier = 1.55;
+      restTime = 12;
     }
 
     // 5 Tipos de treino se revezando dia após dia!
@@ -738,7 +763,7 @@ export function generate30WeeksProgram(): DayWorkout[] {
           ? Math.round(baseEx.reps * durationMultiplier) 
           : undefined,
         restSeconds: restTime,
-        intensity: i > exerciseCount * 0.7 ? baseIntensity : (baseEx.intensity || 'leve')
+        intensity: i > exerciseCount * 0.6 ? baseIntensity : (baseEx.intensity || 'leve')
       };
 
       exercisesForDay.push(exInstance);
@@ -746,30 +771,33 @@ export function generate30WeeksProgram(): DayWorkout[] {
 
     // Cálculos de tempo e calorias proporcionais à quantidade de exercícios
     const estimatedMinutes = Math.round(exercisesForDay.length * 1.3 + (isRestDay ? 5 : 8));
-    const estimatedCalories = Math.round(exercisesForDay.length * 9.5 + (week * 2.5));
+    const estimatedCalories = Math.round(exercisesForDay.length * 9.5 + (week * 2.2));
 
     const dayTitles: Record<number, string> = {
-      1: 'Ativação & Ritmo Inicial',
+      1: 'Ativação & Ritmo',
       2: 'Pernas & Estabilidade',
       3: 'Força & Postura Superior',
       4: 'Core & Cintura Fina',
       5: 'Queima Acelerada & Suor',
       6: 'Resistência & Desafio Total',
-      7: 'Mobilidade, Respiração & Recuperação'
+      7: 'Mobilidade & Recuperação Ativa'
     };
+
+    const stagePrefix = stage === 2 ? '[Etapa 2 Elite] ' : '';
 
     program.push({
       day,
       week,
-      title: `Dia ${day}: ${workoutTypeDef.code} - ${dayTitles[dayOfWeek]}`,
-      focus: `${workoutTypeDef.name} (${exerciseCount} exercícios)`,
+      stage,
+      title: `${stagePrefix}Dia ${day}: ${workoutTypeDef.code} - ${dayTitles[dayOfWeek]}`,
+      focus: `${workoutTypeDef.name} (${exerciseCount} exercícios · Etapa ${stage})`,
       description: isRestDay 
-        ? `Sessão restauradora de domingo: ${exerciseCount} exercícios focados em soltura miofascial, coluna e recarga energética para iniciar a próxima semana com força.`
-        : `${workoutTypeDef.description} Treino progressivo do Dia ${day} estruturado com ${exerciseCount} exercícios.`,
+        ? `Sessão restauradora de domingo (Etapa ${stage}): ${exerciseCount} exercícios focados em soltura miofascial, coluna e recarga energética para iniciar a próxima semana com força.`
+        : `${workoutTypeDef.description} Treino progressivo do Dia ${day} (Semana ${week}, Etapa ${stage}) estruturado com ${exerciseCount} exercícios.`,
       estimatedMinutes,
       estimatedCalories,
       isRestDay,
-      restAdvice: isRestDay ? 'Beba bastante água, alongue com suavidade e aproveite para repousar os músculos.' : undefined,
+      restAdvice: isRestDay ? 'Beba bastante água, alongue com calma e aproveite para descansar a musculatura.' : undefined,
       exercises: exercisesForDay
     });
   }

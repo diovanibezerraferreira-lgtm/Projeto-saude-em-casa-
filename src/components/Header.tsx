@@ -51,7 +51,7 @@ export const Header: React.FC = () => {
               selectedTab === 'workouts' ? 'text-emerald-400 font-semibold border-b-2 border-emerald-400' : ''
             }`}
           >
-            Treinos 30 Semanas
+            Treinos 60 Semanas
           </button>
           <button
             onClick={() => setSelectedTab('diet')}

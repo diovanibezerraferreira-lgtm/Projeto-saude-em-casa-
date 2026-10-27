@@ -16,10 +16,18 @@ import { PlansScreen } from './components/PlansScreen';
 import { DietScreen } from './components/DietScreen';
 import { WorkoutPlayer } from './components/WorkoutPlayer';
 import { SubscriptionModal } from './components/SubscriptionModal';
+import { WeeklyAssessmentModal } from './components/WeeklyAssessmentModal';
 import { Smartphone, Monitor } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { selectedTab, activeWorkoutDay, exitWorkout } = useWorkout();
+  const { 
+    selectedTab, 
+    activeWorkoutDay, 
+    exitWorkout,
+    isAssessmentModalOpen,
+    assessmentWeekNumber,
+    closeAssessmentModal
+  } = useWorkout();
   const [deviceFrameMode, setDeviceFrameMode] = useState<boolean>(false);
 
   return (
@@ -83,6 +91,14 @@ const MainAppContent: React.FC = () => {
 
       {/* Subscription Modal */}
       <SubscriptionModal />
+
+      {/* Weekly & Stage Assessment Modal */}
+      {isAssessmentModalOpen && (
+        <WeeklyAssessmentModal
+          weekNumber={assessmentWeekNumber}
+          onClose={closeAssessmentModal}
+        />
+      )}
 
       {/* Mobile Bottom Navigation Bar */}
       <BottomNav />
